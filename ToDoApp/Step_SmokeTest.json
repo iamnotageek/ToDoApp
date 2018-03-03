@@ -1,0 +1,35 @@
+{
+  "Id": "ActionTemplates-4",
+  "Name": "Smoke Test",
+  "Description": null,
+  "ActionType": "Octopus.Script",
+  "Version": 0,
+  "CommunityActionTemplateId": null,
+  "Properties": {
+    "Octopus.Action.Script.Syntax": "PowerShell",
+    "Octopus.Action.Script.ScriptSource": "Inline",
+    "Octopus.Action.RunOnServer": "false",
+    "Octopus.Action.Script.ScriptBody": "Write-Output \"Making request to $Url\"\r\n    \r\n$response = Invoke-WebRequest -UseBasicParsing $Url -MaximumRedirection 1   \r\n        \r\nif ([int]$response.StatusCode -eq 200) { \r\n    Write-Output \"Smoke test succeeded for $Url\"\r\n       \r\n} else {\r\n    throw \"Warm up failed for $url\"\r\n}",
+    "Octopus.Action.Script.ScriptFileName": null,
+    "Octopus.Action.Package.FeedId": null,
+    "Octopus.Action.Package.PackageId": null
+  },
+  "Parameters": [
+    {
+      "Id": "2b8b7cfb-9769-42eb-87ed-de5378b61172",
+      "Name": "Url",
+      "Label": "Url",
+      "HelpText": "The Url to target for the smoke test",
+      "DefaultValue": null,
+      "DisplaySettings": {
+        "Octopus.ControlType": "SingleLineText"
+      },
+      "Links": {}
+    }
+  ],
+  "$Meta": {
+    "ExportedAt": "2017-04-05T23:01:58.085Z",
+    "OctopusVersion": "3.7.16",
+    "Type": "ActionTemplate"
+  }
+}

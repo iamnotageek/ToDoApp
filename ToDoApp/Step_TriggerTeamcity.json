@@ -1,0 +1,79 @@
+{
+  "Id": "ActionTemplates-3",
+  "Name": "Trigger TeamCity build",
+  "Description": null,
+  "ActionType": "Octopus.Script",
+  "Version": 1,
+  "CommunityActionTemplateId": null,
+  "Properties": {
+    "Octopus.Action.Script.Syntax": "PowerShell",
+    "Octopus.Action.Script.ScriptSource": "Inline",
+    "Octopus.Action.RunOnServer": "false",
+    "Octopus.Action.Script.ScriptBody": "$buildConfId = $OctopusParameters['BuildConfigurationId']\r\n$parameters = $OctopusParameters['BuildParameters']\r\n$teamCityUrl = $OctopusParameters['TeamCityUrl']\r\n$teamCityUsername = $OctopusParameters['TeamCityUsername']\r\n$teamCityPassword = $OctopusParameters['TeamCityPassword']\r\n\r\n$pwd = ConvertTo-SecureString $teamCityPassword -AsPlainText -Force\r\n$cred = New-Object Management.Automation.PSCredential ($teamCityUserName, $pwd)\r\n\r\n\r\n$params = $parameters.Split(\";\")\r\n$paramTemplate = '<property name=\"{0}\" value=\"{1}\"/>'\r\n$paramContent = \"\"\r\n\r\nForeach($param in $params){\r\n    $splits = $param.Split(\"=\")\r\n    $paramContent += $paramTemplate -f $splits[0],$splits[1]\r\n}\r\n\r\nif($paramContent -ne \"\"){\r\n    $paramContent = '<properties>{0}</properties>' -f $paramContent\r\n}\r\n\r\n$contentTemplate = '<build><buildType id=\"{0}\"/>{1}</build>'\r\n$content = $contentTemplate -f $buildConfId,$paramContent\r\n\r\n$responseXml = Invoke-RestMethod -Uri \"$teamCityUrl/httpAuth/app/rest/buildQueue\" -Method Post -ContentType \"application/xml\" -Body $content -Credential $cred\r\n\r\n$buildId = $responseXml.build.id\r\n\r\n\r\n$result = \"\"\r\n$state = \"\"\r\nwhile($state -ne \"finished\")\r\n{\r\n    Write-Host \"Polling TeamCity build result\"\r\n    Start-Sleep -s 2\r\n    $testResult = Invoke-RestMethod -Uri \"$teamCityUrl/httpAuth/app/rest/builds/?locator=id:$buildId\" -Credential $cred\r\n    $state = $testResult.builds.build.state\r\n    $result = $testResult.builds.build.status\r\n    Write-Host \"Current state: $state\"\r\n\r\n}\r\n\r\nif($result -ne \"SUCCESS\")\r\n{\r\n    Write-Host \"TeamCity Acceptance Tests failed.\"\r\n    exit -1\r\n} else\r\n{\r\n    Write-Host \"Successfully executed acceptance tests\"\r\n}\r\n",
+    "Octopus.Action.Script.ScriptFileName": null,
+    "Octopus.Action.Package.FeedId": null,
+    "Octopus.Action.Package.PackageId": null
+  },
+  "Parameters": [
+    {
+      "Id": "15b4bda7-2236-4e97-80c6-54c852f2ccaa",
+      "Name": "BuildConfigurationId",
+      "Label": "Build Configuration Id",
+      "HelpText": "ID of the build to trigger",
+      "DefaultValue": null,
+      "DisplaySettings": {
+        "Octopus.ControlType": "SingleLineText"
+      },
+      "Links": {}
+    },
+    {
+      "Id": "9b0f4028-19c4-49f8-ba01-94fc1a559c45",
+      "Name": "BuildParameters",
+      "Label": "Build parameters",
+      "HelpText": "a ; separated list of parameters to pass to the build",
+      "DefaultValue": null,
+      "DisplaySettings": {
+        "Octopus.ControlType": "SingleLineText"
+      },
+      "Links": {}
+    },
+    {
+      "Id": "9db34e60-c1c1-438a-9a00-03bcced6b509",
+      "Name": "TeamCityUrl",
+      "Label": "TeamCity URL",
+      "HelpText": "Base URL of the TeamCity server",
+      "DefaultValue": null,
+      "DisplaySettings": {
+        "Octopus.ControlType": "SingleLineText"
+      },
+      "Links": {}
+    },
+    {
+      "Id": "615ca42d-40b8-439b-90f3-abc69eef77d2",
+      "Name": "TeamCityUserName",
+      "Label": "TeamCity Username",
+      "HelpText": "Username with permissions to trigger the build",
+      "DefaultValue": null,
+      "DisplaySettings": {
+        "Octopus.ControlType": "SingleLineText"
+      },
+      "Links": {}
+    },
+    {
+      "Id": "95b9ce7a-a395-4c4d-940b-4979c5a0ec3d",
+      "Name": "TeamCityPassword",
+      "Label": "TeamCity Password",
+      "HelpText": null,
+      "DefaultValue": null,
+      "DisplaySettings": {
+        "Octopus.ControlType": "Sensitive"
+      },
+      "Links": {}
+    }
+  ],
+  "$Meta": {
+    "ExportedAt": "2017-04-05T23:01:10.079Z",
+    "OctopusVersion": "3.7.16",
+    "Type": "ActionTemplate"
+  }
+}
